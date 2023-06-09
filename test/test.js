@@ -697,6 +697,12 @@ var util = require('util')
 
 }());
 
+/**
+ * Creates a new FakeRequest object.
+ * @constructor
+ * @param {string} method - The HTTP method for the request. Defaults to 'GET'.
+ * @param {Object} headers - An object containing the headers for the request. Defaults to {'origin': 'http://example.com', 'access-control-request-headers': 'x-header-1, x-header-2'}.
+ */
 function FakeRequest (method, headers) {
   this.headers = headers || {
     'origin': 'http://example.com',
@@ -705,6 +711,12 @@ function FakeRequest (method, headers) {
   this.method = method || 'GET'
 }
 
+/**
+ * Constructor function for creating a fake HTTP response object.
+ * @constructor
+ * @property {Object} _headers - An object containing the response headers.
+ * @property {number} statusCode - The HTTP status code for the response.
+ */
 function FakeResponse () {
   this._headers = {}
   this.statusCode = 200
