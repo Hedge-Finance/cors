@@ -1,0 +1,62 @@
+name: 'OtterDoc Documentation'
+
+# **What it does**: Comments all files in the repo and opens a PR with those comments.
+# **Why we have it**: To keep your code docs up to date.
+# **Who does it impact**: Anyone who wants easy to read docs.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  pull_request:
+
+permissions:
+  contents: write
+  # Needed for the 'trilom/file-changes-action' action
+  pull-requests: write
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  document-changed-files:
+    runs-on: ${{ fromJSON('["ubuntu-latest", "self-hosted"]')[github.repository == 'github/docs-internal'] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.13.x
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Run the otterdoc checker
+      - name: Run OtterDoc
+        uses: Hedge-Finance/otterdoc-actions@main # TODO Change this. Testing only
+        with:
+          key: ${{ secrets.OTTERDOC_KEY }}
+          # files: ${{ steps.changed_files.outputs.files }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5.0.1
+        with:
+            commit-message: OtterDoc - Update function documentation
+            title: OtterDoc - Update function documentation
+            body: OtterDoc - Update function documentation
+            base: ${{ steps.extract_branch.outputs.branch }}
+            labels: documentation, typescript
+            branch: '${{ steps.extract_branch.outputs.branch }}-otterdoc'
+            delete-branch: true
